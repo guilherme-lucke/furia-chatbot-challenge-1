@@ -5,7 +5,7 @@ import ChatInput from "./ChatInput";
 import PlayerStats from "./PlayerStats";
 import MatchInfo from "./MatchInfo";
 import { processMessage, ChatMessage as ChatMessageType } from "@/services/chatbotService";
-import { helpCommands } from "@/data/furiaData";
+import { helpCommands, responses } from "@/data/furiaData";
 
 const FuriaChatbot = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([
@@ -17,6 +17,7 @@ const FuriaChatbot = () => {
   ]);
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -37,14 +38,33 @@ const FuriaChatbot = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setIsProcessing(true);
+    setMessageCount(prevCount => prevCount + 1);
 
     // Process the message and get bot response
     setTimeout(() => {
       const botResponses = processMessage(text);
-      setMessages((prev) => [...prev, ...botResponses]);
+      let updatedMessages = [...botResponses];
+
+      // Check for interactive trigger (e.g., every 5 messages)
+      if ((messageCount + 1) % 5 === 0) {
+        const randomInteractiveResponse = Math.random() < 0.5 
+          ? responses.hype[Math.floor(Math.random() * responses.hype.length)]
+          : responses.memes[Math.floor(Math.random() * responses.memes.length)];
+        
+        updatedMessages.push({
+          id: generateId(), // Assuming generateId is available or imported
+          text: randomInteractiveResponse.text,
+          isUser: false,
+          // Add component if needed for special rendering
+        });
+      }
+      
+      setMessages((prev) => [...prev, ...updatedMessages]);
       setIsProcessing(false);
     }, 500); // Simulate processing delay
   };
+
+   const generateId = () => Math.random().toString(36).substring(2, 11);
 
   return (
     <div className="flex flex-col h-full">
